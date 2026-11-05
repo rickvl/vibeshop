@@ -198,7 +198,7 @@ function update() {
 }
 
 function payUrl(cents) {
-  const amount = (cents / 100).toFixed(2).replace(".", ",");
+  const amount = (cents / 100).toFixed(2);
   return encodeURI(PAY_URL.replace("{BEDRAG}", amount));
 }
 function qrSrc(cents) {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Drankjes & Snacks</title>
+<title>Fris & Snacks</title>
 <style>
   :root {
     --bg: #f4f5fb; --card: #ffffff; --text: #1c1e2b; --muted: #6b6f85;
@@ -59,8 +59,8 @@
 </head>
 <body>
 <header>
-  <h1>🥤 Drankjes & Snacks</h1>
-  <p>Kies je spullen en reken af of zet het op rekening.</p>
+  <h1>🥤 Fris & Snacks</h1>
+  <p>Kies wat je wilt hebben en reken af of zet het op je rekening om later te betalen.</p>
 </header>
 
 <main>
@@ -124,8 +124,9 @@
 // Zet hier de URL of het pad van je betaalverzoek-QR-afbeelding (bijv. "qr.png").
 const QR_IMAGE = "qr.png";
 const PRODUCTS = [
-  { id: "frisdrank", name: "Frisdrank", emoji: "🥤", cents: 100 },
-  { id: "snacks",    name: "Snacks",    emoji: "🍫", cents: 100 }
+  { id: "frisdrank", name: "Frisdrank zonder statiegeld", emoji: "🥤", cents: 70 },
+  { id: "frisdrank-statiegeld", name: "Frisdrank met statiegeld", emoji: "🥤", cents: 85 },
+  { id: "snacks",    name: "Snacks",    emoji: "🍫", cents: 90 }
 ];
 const STORAGE_KEY = "drankjes-rekeningen-v1";
 // ==========================

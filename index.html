@@ -119,9 +119,12 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 // ====== Instellingen ======
-// Zet hier de URL of het pad van je betaalverzoek-QR-afbeelding (bijv. "qr.png").
+// Betaallink: {BEDRAG} wordt vervangen door het bedrag, bijv. 2,50
+const PAY_URL = "https://bunq.me/ML4/{BEDRAG}/Fris en snacks";
+// Reserve-afbeelding als de QR-bibliotheek niet geladen kan worden.
 const QR_IMAGE = "qr.png";
 const PRODUCTS = [
   { id: "frisdrank", name: "Frisdrank zonder statiegeld", emoji: "🥤", cents: 70 },
@@ -194,8 +197,21 @@ function update() {
   renderAccounts();
 }
 
-function open(id) {
-  document.querySelectorAll("[data-qr]").forEach(img => { img.onerror = () => { img.onerror = null; img.src = PLACEHOLDER; }; img.src = QR_IMAGE; });
+function payUrl(cents) {
+  const amount = (cents / 100).toFixed(2).replace(".", ",");
+  return encodeURI(PAY_URL.replace("{BEDRAG}", amount));
+}
+function qrSrc(cents) {
+  try {
+    const qr = qrcode(0, "M");
+    qr.addData(payUrl(cents));
+    qr.make();
+    return qr.createDataURL(8, 4);
+  } catch { return QR_IMAGE; }
+}
+function open(id, cents) {
+  const src = qrSrc(cents);
+  $(id).querySelectorAll("[data-qr]").forEach(img => { img.onerror = () => { img.onerror = null; img.src = PLACEHOLDER; }; img.src = src; });
   $(id).classList.add("open");
 }
 function close(id) { $(id).classList.remove("open"); }
@@ -203,7 +219,7 @@ document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => b.close
 document.querySelectorAll(".backdrop").forEach(b => b.addEventListener("click", e => { if (e.target === b) b.classList.remove("open"); }));
 
 // Meteen afrekenen
-$("payNow").onclick = () => { $("nowAmount").textContent = "Te betalen: " + eur(cartTotal()); open("mdlNow"); };
+$("payNow").onclick = () => { $("nowAmount").textContent = "Te betalen: " + eur(cartTotal()); open("mdlNow", cartTotal()); };
 $("nowDone").onclick = () => { cart = Object.fromEntries(PRODUCTS.map(p => [p.id, 0])); close("mdlNow"); update(); };
 
 // Op rekening
@@ -239,7 +255,7 @@ $("payAccount").onclick = () => {
   if (!selected || !(accounts[selected] > 0)) return;
   $("accTitle").textContent = "Rekening van " + selected;
   $("accAmount").textContent = "Te betalen: " + eur(accounts[selected]);
-  open("mdlAcc");
+  open("mdlAcc", accounts[selected]);
 };
 $("accDone").onclick = () => {
   if (selected && accounts[selected] !== undefined) { delete accounts[selected]; selected = null; save(); }

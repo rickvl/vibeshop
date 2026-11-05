@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drankjes & Snacks</title>
+<style>
+  :root {
+    --bg: #f4f5fb; --card: #ffffff; --text: #1c1e2b; --muted: #6b6f85;
+    --accent: #5b5bf0; --accent-2: #8a5cf6; --ok: #16a34a; --line: #e6e8f2;
+    --shadow: 0 8px 30px rgba(40, 44, 90, .08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #12131c; --card: #1c1e2b; --text: #f1f2f9; --muted: #9a9eb6; --line: #2b2e42; --shadow: 0 8px 30px rgba(0,0,0,.35); }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+  header { padding: 28px 20px 8px; max-width: 760px; margin: 0 auto; }
+  h1 { margin: 0; font-size: 1.9rem; letter-spacing: -.02em; }
+  header p { margin: 4px 0 0; color: var(--muted); }
+  main { max-width: 760px; margin: 0 auto; padding: 16px 20px 60px; display: grid; gap: 20px; }
+  .card { background: var(--card); border-radius: 20px; padding: 20px; box-shadow: var(--shadow); }
+  h2 { margin: 0 0 14px; font-size: 1.15rem; }
+  .item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .item:last-of-type { border-bottom: 0; }
+  .item .emoji { font-size: 2rem; margin-right: 12px; }
+  .item .info { display: flex; align-items: center; flex: 1; }
+  .item .name { font-weight: 600; }
+  .item .price { color: var(--muted); font-size: .92rem; }
+  .stepper { display: flex; align-items: center; gap: 10px; }
+  .stepper button { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: 1.3rem; cursor: pointer; }
+  .stepper button:active { transform: scale(.94); }
+  .stepper .qty { min-width: 28px; text-align: center; font-weight: 700; font-size: 1.1rem; }
+  .total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; padding-top: 14px; border-top: 2px solid var(--line); font-size: 1.2rem; font-weight: 700; }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .btn { border: 0; border-radius: 14px; padding: 15px 16px; font-size: 1rem; font-weight: 600; cursor: pointer; color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+  .btn.secondary { background: var(--bg); color: var(--text); border: 1px solid var(--line); }
+  .btn.ok { background: var(--ok); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn:not(:disabled):active { transform: scale(.98); }
+  .accounts { display: grid; gap: 10px; }
+  .account { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border: 2px solid var(--line); border-radius: 14px; cursor: pointer; background: var(--bg); transition: border-color .15s; }
+  .account.selected { border-color: transparent; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; box-shadow: 0 6px 18px rgba(91, 91, 240, .35); transform: scale(1.02); }
+  .account.selected::before { content: "✓"; margin-right: 10px; font-weight: 800; }
+  .account.selected span:first-of-type { flex: 1; font-weight: 700; }
+  .account.zero { opacity: .55; }
+  .account .amt { font-weight: 700; }
+  .empty { color: var(--muted); text-align: center; padding: 14px 0; }
+  .backdrop { position: fixed; inset: 0; background: rgba(10,12,25,.55); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 10; backdrop-filter: blur(3px); }
+  .backdrop.open { display: flex; }
+  .modal { background: var(--card); border-radius: 24px; padding: 26px; width: 100%; max-width: 380px; text-align: center; box-shadow: var(--shadow); }
+  .modal h3 { margin: 0 0 6px; font-size: 1.3rem; }
+  .modal p { margin: 0 0 14px; color: var(--muted); }
+  .qr { width: 240px; max-width: 100%; aspect-ratio: 1; object-fit: contain; background: #fff; border-radius: 16px; padding: 10px; border: 1px solid var(--line); }
+  .modal .btn { width: 100%; margin-top: 10px; }
+  select, input[type=text] { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: 1rem; margin-bottom: 10px; }
+  .field-label { display: block; text-align: left; font-size: .85rem; color: var(--muted); margin: 6px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🥤 Drankjes & Snacks</h1>
+  <p>Kies je spullen en reken af of zet het op rekening.</p>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Prijslijst</h2>
+    <div id="items"></div>
+    <div class="total"><span>Totaal</span><span id="total">€ 0,00</span></div>
+    <div class="actions">
+      <button class="btn" id="payNow" disabled>Meteen afrekenen</button>
+      <button class="btn secondary" id="putOnTab" disabled>Zet op rekening</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Openstaande rekeningen</h2>
+    <div class="accounts" id="accounts"></div>
+    <div class="actions" style="grid-template-columns:1fr">
+      <button class="btn" id="payAccount" disabled>Betalen</button>
+    </div>
+  </section>
+</main>
+
+<!-- Modal: meteen afrekenen -->
+<div class="backdrop" id="mdlNow">
+  <div class="modal">
+    <h3>Scan om te betalen</h3>
+    <p id="nowAmount"></p>
+    <img class="qr" alt="Betaal QR-code" data-qr>
+    <button class="btn ok" id="nowDone">Ik heb betaald</button>
+    <button class="btn secondary" data-close>Annuleren</button>
+  </div>
+</div>
+
+<!-- Modal: op rekening -->
+<div class="backdrop" id="mdlTab">
+  <div class="modal">
+    <h3>Op rekening zetten</h3>
+    <p id="tabAmount"></p>
+    <label class="field-label" for="tabSelect">Kies een bestaande naam</label>
+    <select id="tabSelect"></select>
+    <label class="field-label" for="tabNew" id="tabNewLabel">Of voer een nieuwe naam in</label>
+    <input type="text" id="tabNew" placeholder="Nieuwe naam" maxlength="40" autocomplete="off">
+    <button class="btn" id="tabConfirm">Bevestigen</button>
+    <button class="btn secondary" data-close>Annuleren</button>
+  </div>
+</div>
+
+<!-- Modal: rekening betalen -->
+<div class="backdrop" id="mdlAcc">
+  <div class="modal">
+    <h3 id="accTitle">Rekening betalen</h3>
+    <p id="accAmount"></p>
+    <img class="qr" alt="Betaal QR-code" data-qr>
+    <button class="btn ok" id="accDone">Ik heb betaald</button>
+    <button class="btn secondary" data-close>Annuleren</button>
+  </div>
+</div>
+
+<script>
+// ====== Instellingen ======
+// Zet hier de URL of het pad van je betaalverzoek-QR-afbeelding (bijv. "qr.png").
+const QR_IMAGE = "qr.png";
+const PRODUCTS = [
+  { id: "frisdrank", name: "Frisdrank", emoji: "🥤", cents: 100 },
+  { id: "snacks",    name: "Snacks",    emoji: "🍫", cents: 100 }
+];
+const STORAGE_KEY = "drankjes-rekeningen-v1";
+// ==========================
+
+const PLACEHOLDER = "data:image/svg+xml;utf8," + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#fff"/>' +
+  '<rect x="10" y="10" width="180" height="180" fill="none" stroke="#bbb" stroke-width="3" stroke-dasharray="8 6"/>' +
+  '<text x="100" y="95" text-anchor="middle" font-family="sans-serif" font-size="15" fill="#777">Plaats hier je</text>' +
+  '<text x="100" y="118" text-anchor="middle" font-family="sans-serif" font-size="15" fill="#777">betaal-QR (qr.png)</text></svg>');
+
+const eur = c => "€ " + (c / 100).toFixed(2).replace(".", ",");
+const $ = id => document.getElementById(id);
+
+let cart = Object.fromEntries(PRODUCTS.map(p => [p.id, 0]));
+let accounts = load();
+let selected = null;
+
+function load() {
+  try { const d = JSON.parse(localStorage.getItem(STORAGE_KEY)); return d && typeof d === "object" ? d : {}; }
+  catch { return {}; }
+}
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts)); } catch {}
+}
+const cartTotal = () => PRODUCTS.reduce((s, p) => s + cart[p.id] * p.cents, 0);
+
+function renderItems() {
+  const box = $("items"); box.innerHTML = "";
+  PRODUCTS.forEach(p => {
+    const row = document.createElement("div"); row.className = "item";
+    row.innerHTML = '<div class="info"><span class="emoji"></span><div><div class="name"></div><div class="price"></div></div></div>' +
+      '<div class="stepper"><button aria-label="Minder">−</button><span class="qty"></span><button aria-label="Meer">+</button></div>';
+    row.querySelector(".emoji").textContent = p.emoji;
+    row.querySelector(".name").textContent = p.name;
+    row.querySelector(".price").textContent = eur(p.cents) + " per stuk";
+    row.querySelector(".qty").textContent = cart[p.id];
+    const [minus, plus] = row.querySelectorAll("button");
+    minus.onclick = () => { if (cart[p.id] > 0) { cart[p.id]--; update(); } };
+    plus.onclick = () => { cart[p.id]++; update(); };
+    box.appendChild(row);
+  });
+}
+
+function renderAccounts() {
+  const box = $("accounts"); box.innerHTML = "";
+  const names = Object.keys(accounts).sort((a, b) => a.localeCompare(b, "nl"));
+  if (!names.length) { box.innerHTML = '<div class="empty">Nog geen rekeningen.</div>'; }
+  names.forEach(name => {
+    const el = document.createElement("div");
+    el.className = "account" + (name === selected ? " selected" : "") + (accounts[name] === 0 ? " zero" : "");
+    const n = document.createElement("span"); n.textContent = name;
+    const a = document.createElement("span"); a.className = "amt"; a.textContent = eur(accounts[name]);
+    el.append(n, a);
+    el.onclick = () => { selected = name; renderAccounts(); };
+    box.appendChild(el);
+  });
+  $("payAccount").disabled = !(selected && accounts[selected] > 0);
+}
+
+function update() {
+  renderItems();
+  $("total").textContent = eur(cartTotal());
+  const empty = cartTotal() === 0;
+  $("payNow").disabled = empty; $("putOnTab").disabled = empty;
+  renderAccounts();
+}
+
+function open(id) {
+  document.querySelectorAll("[data-qr]").forEach(img => { img.onerror = () => { img.onerror = null; img.src = PLACEHOLDER; }; img.src = QR_IMAGE; });
+  $(id).classList.add("open");
+}
+function close(id) { $(id).classList.remove("open"); }
+document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => b.closest(".backdrop").classList.remove("open"));
+document.querySelectorAll(".backdrop").forEach(b => b.addEventListener("click", e => { if (e.target === b) b.classList.remove("open"); }));
+
+// Meteen afrekenen
+$("payNow").onclick = () => { $("nowAmount").textContent = "Te betalen: " + eur(cartTotal()); open("mdlNow"); };
+$("nowDone").onclick = () => { cart = Object.fromEntries(PRODUCTS.map(p => [p.id, 0])); close("mdlNow"); update(); };
+
+// Op rekening
+function fillTabSelect() {
+  const sel = $("tabSelect"); sel.innerHTML = "";
+  const names = Object.keys(accounts).sort((a, b) => a.localeCompare(b, "nl"));
+  const first = document.createElement("option"); first.value = ""; first.textContent = names.length ? "— Kies een naam —" : "— Nog geen namen —";
+  sel.appendChild(first);
+  names.forEach(n => { const o = document.createElement("option"); o.value = n; o.textContent = n; sel.appendChild(o); });
+}
+$("putOnTab").onclick = () => {
+  $("tabAmount").textContent = "Bedrag: " + eur(cartTotal());
+  fillTabSelect(); $("tabNew").value = ""; open("mdlTab");
+};
+$("tabSelect").onchange = () => { if ($("tabSelect").value) $("tabNew").value = ""; };
+$("tabNew").oninput = () => { if ($("tabNew").value) $("tabSelect").value = ""; };
+$("tabConfirm").onclick = () => {
+  const typed = $("tabNew").value.trim().replace(/\s+/g, " ");
+  let name = typed || $("tabSelect").value;
+  if (!name) { $("tabNew").focus(); return; }
+  // zelfde naam (hoofdletterongevoelig) hergebruiken
+  const existing = Object.keys(accounts).find(n => n.toLowerCase() === name.toLowerCase());
+  if (existing) name = existing;
+  accounts[name] = (accounts[name] || 0) + cartTotal();
+  save();
+  selected = name;
+  cart = Object.fromEntries(PRODUCTS.map(p => [p.id, 0]));
+  close("mdlTab"); update();
+};
+
+// Rekening betalen
+$("payAccount").onclick = () => {
+  if (!selected || !(accounts[selected] > 0)) return;
+  $("accTitle").textContent = "Rekening van " + selected;
+  $("accAmount").textContent = "Te betalen: " + eur(accounts[selected]);
+  open("mdlAcc");
+};
+$("accDone").onclick = () => {
+  if (selected && accounts[selected] !== undefined) { delete accounts[selected]; selected = null; save(); }
+  close("mdlAcc"); update();
+};
+
+update();
+</script>
+</body>
+</html>
